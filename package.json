@@ -1,0 +1,23 @@
+{
+  "name": "testpilot",
+  "version": "0.1.0",
+  "private": true,
+  "engines": { "node": ">=22.13.0" },
+  "scripts": {
+    "install:apps": "npm ci --prefix apps/web && npm ci --prefix workers/browser-worker",
+    "dev:web": "npm --prefix apps/web run dev",
+    "dev:api": "node scripts/api.mjs dev",
+    "dev:worker": "npm --prefix workers/browser-worker run dev --",
+    "test:url": "npm --prefix workers/browser-worker run test:url --",
+    "build:web": "npm --prefix apps/web run build",
+    "build:api": "node scripts/api.mjs build",
+    "build:worker": "npm --prefix workers/browser-worker run build",
+    "lint:web": "npm --prefix apps/web run lint",
+    "typecheck": "npm --prefix apps/web run typecheck && npm --prefix workers/browser-worker run typecheck",
+    "test": "npm run test:worker && npm run test:api",
+    "test:worker": "npm --prefix workers/browser-worker test",
+    "test:api": "node scripts/api.mjs test",
+    "test:smoke": "npm --prefix workers/browser-worker run test:smoke",
+    "browsers:install": "npm --prefix workers/browser-worker run browsers:install"
+  }
+}
