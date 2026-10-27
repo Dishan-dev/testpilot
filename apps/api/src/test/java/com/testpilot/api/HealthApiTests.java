@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
 @Import(HealthApiTests.ErrorFixture.class)
 class HealthApiTests {
@@ -26,8 +28,8 @@ class HealthApiTests {
     @Autowired ApplicationContext context;
 
     @Test
-    void startsWithoutDatabase() {
-        assertThat(context.getBeansOfType(DataSource.class)).isEmpty();
+    void startsWithDatabase() {
+        assertThat(context.getBeansOfType(DataSource.class)).hasSize(1);
     }
 
     @Test

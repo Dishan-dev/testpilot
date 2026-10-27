@@ -1,0 +1,1 @@
+export default function Loading() { return <div className="panel p-10" role="status"><p className="text-lg font-medium">Loading workspace…</p><p className="mt-2 text-sm text-slate-400">Retrieving your projects and execution evidence.</p></div>; }

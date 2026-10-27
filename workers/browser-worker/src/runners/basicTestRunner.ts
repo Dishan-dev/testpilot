@@ -9,11 +9,13 @@ import { createRunDirectory, writeReport } from "../reports/reportGenerator.js";
 import { validateUrl } from "../security/urlValidator.js";
 import { errorMessage, type TestResult } from "../types/testResult.js";
 
-export async function runBasicTest(input: string, config: WorkerConfig, launcher: BrowserLauncher = launchBrowser) {
+export interface RunOptions { runId?: string; signal?: AbortSignal; restrictNetwork?: boolean }
+
+export async function runBasicTest(input: string, config: WorkerConfig, launcher: BrowserLauncher = launchBrowser, options: RunOptions = {}) {
   const url = validateUrl(input, config.authorizedHosts);
   const started = performance.now();
   const result: TestResult = {
-    runId: randomUUID(), url: url.href, finalUrl: null, title: null, statusCode: null,
+    runId: options.runId ?? randomUUID(), url: url.href, finalUrl: null, title: null, statusCode: null,
     status: "ERROR", durationMs: 0, consoleErrors: [], pageErrors: [], failedRequests: [],
     droppedEvidenceCount: 0, screenshotPath: null, timestamp: new Date().toISOString(), errors: [],
   };
@@ -22,9 +24,23 @@ export async function runBasicTest(input: string, config: WorkerConfig, launcher
   let context: BrowserContext | undefined;
   let page: Page | undefined;
   let detach: (() => void) | undefined;
+  const abort = () => { void browser?.close().catch(() => {}); };
+  options.signal?.addEventListener("abort", abort, { once: true });
   try {
+    options.signal?.throwIfAborted();
     browser = await launcher(config);
+    options.signal?.throwIfAborted();
     context = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block", acceptDownloads: false });
+    if (options.restrictNetwork) {
+      await context.route("**/*", async (route) => {
+        try {
+          validateUrl(route.request().url(), config.authorizedHosts);
+          if (!["GET", "HEAD"].includes(route.request().method())) throw new Error("Only read-only requests are allowed.");
+          await route.fallback();
+        } catch { await route.abort("blockedbyclient"); }
+      });
+      await context.routeWebSocket("**/*", (socket) => socket.close());
+    }
     page = await withTimeout(context.newPage(), config.launchTimeoutMs, "Page creation");
     page.setDefaultTimeout(config.captureTimeoutMs);
     detach = attachErrorCollector(page, result);
@@ -37,7 +53,7 @@ export async function runBasicTest(input: string, config: WorkerConfig, launcher
       result.status = "FAILED";
       result.errors.push({ phase: "navigation", message: errorMessage(error) });
     }
-    result.finalUrl = page.url();
+    result.finalUrl = page.url().slice(0, 4000);
     try {
       result.title = (await withTimeout(page.title(), config.captureTimeoutMs, "Page title capture")).slice(0, 4000);
     } catch (error) {
@@ -56,6 +72,7 @@ export async function runBasicTest(input: string, config: WorkerConfig, launcher
     result.status = "ERROR";
     result.errors.push({ phase: "execution", message: errorMessage(error) });
   } finally {
+    options.signal?.removeEventListener("abort", abort);
     detach?.();
     // Try both closes even if context closure fails.
     for (const resource of [context, browser]) {

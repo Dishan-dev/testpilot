@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import { Navigation } from "@/components/navigation";
 import "./globals.css";
@@ -18,7 +19,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <aside className="sidebar">
             <Link href="/" className="flex items-center gap-3 text-xl font-semibold tracking-tight" aria-label="TestPilot home"><span className="brand-mark" aria-hidden="true">T</span>TestPilot<span className="text-emerald-400">.</span></Link>
             <div className="mt-10 mb-3 hidden text-[10px] font-semibold tracking-[0.18em] text-slate-500 md:block">WORKSPACE</div>
-            <Navigation />
+            <Suspense fallback={<div className="mt-5 text-sm text-slate-400">Loading navigation…</div>}><Navigation /></Suspense>
             <div className="mt-auto hidden border-t border-slate-800 pt-5 md:block"><p className="text-sm text-slate-300">Development workspace</p><p className="mt-1 text-xs text-slate-500">Browser testing foundation</p></div>
           </aside>
           <div className="min-w-0">

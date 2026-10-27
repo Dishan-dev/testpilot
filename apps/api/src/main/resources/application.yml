@@ -8,13 +8,18 @@ server:
 spring:
   application:
     name: testpilot-api
-  # Milestone 1 deliberately has no database. Dependencies remain available.
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
-      - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://127.0.0.1:5432/testpilot}
+    username: ${DATABASE_USER:testpilot}
+    password: ${DATABASE_PASSWORD:}
+    hikari:
+      maximum-pool-size: 10
   jpa:
     open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
 
 management:
   endpoints:
@@ -26,5 +31,11 @@ management:
       show-details: never
 
 testpilot:
+  authorized-hosts: ${AUTHORIZED_HOSTS:}
+  worker-token: ${WORKER_API_TOKEN:}
+  artifact-secret: ${ARTIFACT_SECRET:}
+  artifacts-dir: ${ARTIFACTS_DIR:../../artifacts}
+  lease-seconds: ${LEASE_SECONDS:30}
+  max-attempt-seconds: ${MAX_ATTEMPT_SECONDS:180}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}

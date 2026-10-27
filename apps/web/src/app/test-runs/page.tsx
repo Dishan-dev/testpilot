@@ -1,7 +1,11 @@
-import type { Metadata } from "next";
+import { request, type PageData, type TestRun } from "@/lib/api";
 import { PageHeading } from "@/components/page-heading";
-
-export const metadata: Metadata = { title: "Test Runs" };
-export default function TestRunsPage() {
-  return <><PageHeading eyebrow="TEST RUNS" title="Start with the evidence." description="Run your first smoke test locally. Each execution produces its own JSON report and full-page screenshot." /><section className="panel p-6 sm:p-8"><h2 className="text-xl font-semibold">Run the example smoke test</h2><p className="mt-3 text-sm leading-7 text-slate-400">After installing the worker dependencies and Chromium, run these commands from the repository root. The example environment explicitly authorizes example.com.</p><pre className="mt-6 overflow-x-auto rounded-lg border border-slate-800 bg-[#090f18] p-5 text-sm leading-8 text-emerald-200"><code>{"cd workers/browser-worker\ncp .env.example .env\nnpm run test:url -- https://example.com"}</code></pre><p className="mt-4 text-sm text-slate-400">PowerShell: use <code>Copy-Item .env.example .env</code> for the copy step.</p><div className="mt-7 grid gap-6 border-t border-slate-800 pt-6 sm:grid-cols-2"><div><h3 className="font-medium">What gets captured</h3><p className="mt-2 text-sm leading-6 text-slate-400">Page title, HTTP status, JavaScript exceptions, console errors, failed requests, and a screenshot.</p></div><div><h3 className="font-medium">What a pass means</h3><p className="mt-2 text-sm leading-6 text-slate-400">Basic navigation succeeded. Evidence can still contain issues; a pass does not mean the website is bug-free.</p></div></div></section><p className="mt-6 text-sm leading-6 text-slate-400">Run history is not connected to this dashboard yet. Test only authorized hosts. Host allowlisting alone does not provide network isolation.</p></>;
+import { LiveHistory } from "@/components/live-history";
+import { Pagination } from "@/components/pagination";
+export const metadata = { title: "Executions" };
+export default async function RunsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  const { page = "0" } = await searchParams;
+  const path = `/api/runs?page=${encodeURIComponent(page)}&size=20`;
+  const runs = await request<PageData<TestRun>>(path);
+  return <><PageHeading eyebrow="EXECUTIONS" title="Every run. All the evidence." description="Track navigation checks across your projects and inspect their captured results." /><LiveHistory key={path} initial={runs} endpoint={path} /><Pagination {...runs} path="/test-runs" /></>;
 }
